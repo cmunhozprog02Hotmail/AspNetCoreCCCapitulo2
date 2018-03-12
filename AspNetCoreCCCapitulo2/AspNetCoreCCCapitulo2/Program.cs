@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AspNetCoreCCCapitulo2.Data;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace AspNetCoreCCCapitulo2
@@ -14,7 +10,25 @@ namespace AspNetCoreCCCapitulo2
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            var host = BuildWebHost(args);
+
+            using (var scope = host.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+
+                try
+                {
+                    var context = services.GetRequiredService<IESContext>();
+                    IESDbInitializer.Initializer(context);
+                }
+                catch (System.Exception ex)
+                {
+                    var logger = services.GetRequiredService < ILogger<Program>>();
+                    logger.LogError(ex, "Um erroocorreu ao popular a base de dados.");
+                    
+                }
+            }
+            host.Run();
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
